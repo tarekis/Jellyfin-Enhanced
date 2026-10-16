@@ -49,7 +49,7 @@ def main():
         try:
             image = hr.pull(hr.IMAGES["jf10"])
             build = subprocess.run(["dotnet", "build", str(ROOT / "Jellyfin.Plugin.JellyfinEnhanced/JellyfinEnhanced.csproj"), "-c", "Release",
-                                    "-p:JellyfinTarget=jf10", "--artifacts-path", str(temp / "build")], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                    "-p:JellyfinTarget=jf10", "-p:JeEs5Build=true", "--artifacts-path", str(temp / "build")], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             assert build.returncode == 0, "Build failed:\n" + build.stdout[-3000:]
             dll = list((temp / "build/bin").rglob("Jellyfin.Plugin.JellyfinEnhanced.dll"))
             assert len(dll) == 1, dll

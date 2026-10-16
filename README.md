@@ -26,7 +26,7 @@
 </p>
 
 > [!NOTE]
-> **Fork: ES5 compatibility layer for old devices.** This fork adds an admin setting, **Admin → Compatibility → ES5 compatibility layer for old devices** (off by default). When it's on, the server serves the client scripts transpiled to ES5 with a polyfill layer, so Jellyfin Enhanced also runs on devices whose web engine can't parse the regular scripts. One example is the official Jellyfin app on LG webOS 3.x TVs (Chromium 38). With the setting off, nothing changes. See [`scripts/es5/README.md`](scripts/es5/README.md). Building needs Node.js 22+ next to the .NET SDK.
+> **Fork: ES5 compatibility layer for old devices.** This fork adds an admin setting, **Admin → Compatibility → ES5 compatibility layer for old devices** (off by default). When it's on, the server serves the client scripts transpiled to ES5 with a polyfill layer, so Jellyfin Enhanced also runs on devices whose web engine can't parse the regular scripts. One example is the official Jellyfin app on LG webOS 3.x TVs (Chromium 38). With the setting off, nothing changes. See [`scripts/es5/README.md`](scripts/es5/README.md). Release builds include it (`-p:JeEs5Build=true`, needs Node.js 22+); a plain `dotnet build` needs no Node.js and leaves it out.
 
 <p align="center">
   <img src="docs/images/readme/hero.webp" alt="A quick tour: quality tags on posters, then a movie page with ratings, streaming availability, reviews, awards, cast ages and Seerr recommendations" width="100%">

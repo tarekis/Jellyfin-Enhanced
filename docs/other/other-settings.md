@@ -494,7 +494,7 @@ Turn on **ES5 compatibility layer for old devices** when Jellyfin itself works o
 
     Some newer styling (spacing in flex layouts, `:has()` rules, `backdrop-filter` and similar) isn't available on those old engines, so the layout can look plainer there. Features still load.
 
-    The admin configuration page itself always uses the regular scripts. A plugin build made with `-p:JeEs5Build=false` doesn't contain the ES5 scripts; the setting has no effect there, and the server log says so when you switch it.
+    The admin configuration page itself always uses the regular scripts. Release builds contain the ES5 scripts. A plugin you build yourself contains them only with `-p:JeEs5Build=true` (needs Node.js 22+). Without them the setting has no effect, and the server log says so when you switch it.
 
 ## Developer Settings
 

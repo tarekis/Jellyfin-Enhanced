@@ -18,6 +18,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -232,17 +233,33 @@ async function main() {
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.copyFileSync(path.join(projectDir, 'js', rel), target);
     }
+    // Plain files for the tests (tests/frontend with JE_ES5_DIR, tests/es5), and
+    // Brotli-compressed copies under embed/ that the .csproj embeds: the DLL then
+    // grows by the compressed size only, and the server decompresses on serving.
     let bytes = 0;
+    let compressedBytes = 0;
     for (const [rel, code] of outputs) {
         const target = path.join(outDir, rel);
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.writeFileSync(target, code);
         bytes += Buffer.byteLength(code);
+        if (rel === 'compat-prelude.js') continue;
+        const compressed = zlib.brotliCompressSync(Buffer.from(code), {
+            params: {
+                [zlib.constants.BROTLI_PARAM_QUALITY]: zlib.constants.BROTLI_MAX_QUALITY,
+                [zlib.constants.BROTLI_PARAM_SIZE_HINT]: Buffer.byteLength(code),
+            },
+        });
+        const embedTarget = path.join(outDir, 'embed', `${rel}.br`);
+        fs.mkdirSync(path.dirname(embedTarget), { recursive: true });
+        fs.writeFileSync(embedTarget, compressed);
+        compressedBytes += compressed.length;
     }
 
+    const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
     console.log(`ES5 build (${TARGETS}): ${jsFiles.length} scripts, ${HTML_PAGES.length} pages, `
         + `${coreJsUsed.size} core-js modules, ${helpersUsed.size} helpers, `
-        + `${(bytes / 1024 / 1024).toFixed(1)} MB -> ${path.relative(repoRoot, outDir)} in ${Date.now() - started} ms`);
+        + `${mb(bytes)} (${mb(compressedBytes)} embedded, Brotli) -> ${path.relative(repoRoot, outDir)} in ${Date.now() - started} ms`);
 }
 
 main().catch((error) => {

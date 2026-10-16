@@ -13,11 +13,16 @@ build of the scripts instead.
 
 ## Build
 
-`build.mjs` produces the ES5 build. `dotnet build` runs it (see the
+`build.mjs` produces the ES5 build. It's opt-in at build time: a plain
+`dotnet build` leaves it out and needs no Node.js, and the setting then has no
+effect. Release builds (`.github/workflows/release.yml`) and the backend CI
+job pass `-p:JeEs5Build=true`. That runs `build.mjs` (see the
 `JeBuildEs5`/`JeEmbedEs5` targets in `JellyfinEnhanced.csproj`), and the DLL
-embeds the output **next to** the original resources, under the `es5.`
-resource prefix (`Jellyfin.Plugin.JellyfinEnhanced.es5.js.…`). The original
-resources are unchanged.
+embeds the output **next to** the original resources, Brotli-compressed under
+the `es5.` resource prefix (`Jellyfin.Plugin.JellyfinEnhanced.es5.js.….br`). The
+original resources are unchanged. Compressed, the second copy adds about
+0.9 MB to the DLL: the ES5 modules are ~0.80 MB, the compatibility layer
+~0.09 MB. The server decompresses a script when it serves it.
 
 | Input | Output |
 | --- | --- |
@@ -31,7 +36,7 @@ and always keeps its regular scripts.
 ## Serving
 
 `Services/ClientScriptVariant.cs` decides per request. With the setting on and
-the ES5 resources present, these all return the `es5.` resource:
+the ES5 resources present, these all return the decompressed `es5.` resource:
 
 * `/JellyfinEnhanced/script`
 * `/JellyfinEnhanced/js/*`
@@ -97,10 +102,11 @@ and keyboard handlers do.
 
 ```sh
 npm ci
-npm run build:es5                 # -> Jellyfin.Plugin.JellyfinEnhanced/obj/es5
-npm run test:frontend:es5         # the frontend suite against the ES5 output
-npm run test:chromium38           # boots plugin.js + bundle in a real Chromium 38 (tests/es5/README.md)
-dotnet build -p:JeEs5Build=false  # build without the ES5 resources (needs no Node.js; the setting then has no effect)
+npm run build:es5                                # -> Jellyfin.Plugin.JellyfinEnhanced/obj/es5
+npm run test:frontend:es5                        # the frontend suite against the ES5 output
+npm run test:chromium38                          # boots plugin.js + bundle in a real Chromium 38 (tests/es5/README.md)
+dotnet build -c Release -p:JeEs5Build=true       # a plugin DLL with the ES5 build embedded, as released
+JeEs5Build=true JE_REQUIRE_ES5=1 python3 tests/run.py backend --target jf12   # backend tests incl. the ES5 ones
 ```
 
 The build fails if any output file doesn't parse as ES5 (checked with acorn),

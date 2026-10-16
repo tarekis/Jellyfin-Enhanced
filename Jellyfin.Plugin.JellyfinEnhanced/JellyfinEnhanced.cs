@@ -301,7 +301,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced
             if (es5WasEnabled != (Configuration?.Es5CompatibilityMode == true))
             {
                 _logger.Info($"Jellyfin Enhanced: ES5 compatibility mode {(Configuration?.Es5CompatibilityMode == true ? "enabled" : "disabled")}"
-                    + (Services.ClientScriptVariant.Es5Embedded ? "." : ", but this build has no ES5 scripts (built with JeEs5Build=false); serving the modern scripts."));
+                    + (Services.ClientScriptVariant.Es5Embedded ? "." : ", but this build has no ES5 scripts (built without -p:JeEs5Build=true); serving the regular scripts."));
                 if (Configuration?.DisableScriptInjectionMiddleware == true)
                 {
                     UpdateIndexHtml(true);

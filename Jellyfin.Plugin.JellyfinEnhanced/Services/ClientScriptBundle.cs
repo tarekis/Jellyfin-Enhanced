@@ -111,7 +111,6 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
         private static (byte[] Script, byte[] SourceMap) Build(string cacheKey, bool es5, Logger logger)
         {
             var scripts = GetComponentScripts();
-            var assembly = Assembly.GetExecutingAssembly();
             var sb = new StringBuilder(2 * 1024 * 1024);
             var sections = new List<Section>(scripts.Count);
             // 0-based index of the line the next append starts on; kept exact so
@@ -137,7 +136,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
                 string? content = null;
                 if (SafePath.IsMatch(path))
                 {
-                    using var stream = assembly.GetManifestResourceStream(ClientScriptVariant.Resolve(ResourcePrefix + path.Replace('/', '.'), es5));
+                    using var stream = ClientScriptVariant.Open(ResourcePrefix + path.Replace('/', '.'), es5);
                     if (stream != null)
                     {
                         using var reader = new StreamReader(stream, Encoding.UTF8);

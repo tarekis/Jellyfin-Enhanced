@@ -63,7 +63,7 @@ jobs:
 
     - if: matrix.build-mode == 'manual'
       name: Build
-      run: dotnet build Jellyfin.Plugin.JellyfinEnhanced/JellyfinEnhanced.csproj --configuration Release -p:JeEs5Build=false
+      run: dotnet build Jellyfin.Plugin.JellyfinEnhanced/JellyfinEnhanced.csproj --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d

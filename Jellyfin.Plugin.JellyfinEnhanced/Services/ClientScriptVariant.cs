@@ -7,16 +7,15 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
     /// <summary>
     /// Which build of the client scripts the server hands out.
     ///
-    /// A build made with -p:JeEs5Build=true (release builds) embeds the client scripts
-    /// twice: as written (js/**, PluginPages/*.html), and as the ES5 build of
-    /// scripts/es5/build.mjs, Brotli-compressed under the "es5." resource prefix with a
-    /// ".br" suffix, with a compatibility layer (polyfills) in front of js/plugin.js.
+    /// The DLL embeds the client scripts twice (unless built with -p:JeEs5Build=false):
+    /// as written (js/**, PluginPages/*.html), and as the ES5 build of scripts/es5/build.mjs,
+    /// Brotli-compressed under the "es5." resource prefix with a ".br" suffix, with a
+    /// compatibility layer (polyfills) in front of js/plugin.js.
     /// The ES5 build is for old web engines that can't parse modern JavaScript, such as
     /// LG webOS 3.x TVs (Chromium 38) running the official Jellyfin app. It is served
     /// only while the admin turns on <see cref="Configuration.PluginConfiguration.Es5CompatibilityMode"/>,
     /// to every client, since the setting is server-wide. Off (the default), nothing
-    /// changes. Without the ES5 resources (the default dotnet build) the setting has
-    /// no effect.
+    /// changes. Without the ES5 resources the setting has no effect.
     /// </summary>
     internal static class ClientScriptVariant
     {

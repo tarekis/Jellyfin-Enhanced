@@ -13,11 +13,11 @@ build of the scripts instead.
 
 ## Build
 
-`build.mjs` produces the ES5 build. It's opt-in at build time: a plain
-`dotnet build` leaves it out and needs no Node.js, and the setting then has no
-effect. Release builds (`.github/workflows/release.yml`) and the backend CI
-job pass `-p:JeEs5Build=true`. That runs `build.mjs` (see the
-`JeBuildEs5`/`JeEmbedEs5` targets in `JellyfinEnhanced.csproj`), and the DLL
+`build.mjs` produces the ES5 build. `dotnet build` runs it by default (see the
+`JeCheckNode`/`JeBuildEs5`/`JeEmbedEs5` targets in `JellyfinEnhanced.csproj`), so a
+release built on any machine carries it. It needs Node.js 22+; without Node the
+build stops with a message saying so. `-p:JeEs5Build=false` builds without it and
+without Node.js, and the setting then has no effect. The DLL
 embeds the output **next to** the original resources, Brotli-compressed under
 the `es5.` resource prefix (`Jellyfin.Plugin.JellyfinEnhanced.es5.js.….br`). The
 original resources are unchanged. Compressed, the second copy adds about
@@ -105,8 +105,9 @@ npm ci
 npm run build:es5                                # -> Jellyfin.Plugin.JellyfinEnhanced/obj/es5
 npm run test:frontend:es5                        # the frontend suite against the ES5 output
 npm run test:chromium38                          # boots plugin.js + bundle in a real Chromium 38 (tests/es5/README.md)
-dotnet build -c Release -p:JeEs5Build=true       # a plugin DLL with the ES5 build embedded, as released
-JeEs5Build=true JE_REQUIRE_ES5=1 python3 tests/run.py backend --target jf12   # backend tests incl. the ES5 ones
+dotnet build -c Release                          # the plugin DLL, ES5 build embedded (as released)
+dotnet build -c Release -p:JeEs5Build=false      # without the ES5 build; needs no Node.js
+JE_REQUIRE_ES5=1 python3 tests/run.py backend --target jf12   # backend tests; fail if the ES5 build is missing
 ```
 
 The build fails if any output file doesn't parse as ES5 (checked with acorn),

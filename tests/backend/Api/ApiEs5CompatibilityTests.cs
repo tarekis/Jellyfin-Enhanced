@@ -11,7 +11,7 @@ namespace JE.Tests;
 /// The admin setting Es5CompatibilityMode switches every script response to the ES5
 /// build (scripts/es5/build.mjs) embedded Brotli-compressed under the "es5." prefix;
 /// off (the default) the responses are the original resources, byte for byte.
-/// The ES5 resources exist only in a -p:JeEs5Build=true build; without them the tests
+/// A -p:JeEs5Build=false build has no ES5 resources; without them the tests
 /// that need them return early, unless JE_REQUIRE_ES5=1 (set in CI) makes that a failure.
 /// </summary>
 [Collection("Plugin singleton")]
@@ -42,7 +42,7 @@ public class ApiEs5CompatibilityTests
     {
         if (ClientScriptVariant.Es5Embedded) return true;
         Assert.True(Environment.GetEnvironmentVariable("JE_REQUIRE_ES5") != "1",
-            "JE_REQUIRE_ES5=1 but this build has no ES5 resources; build with -p:JeEs5Build=true.");
+            "JE_REQUIRE_ES5=1 but this build has no ES5 resources (built with -p:JeEs5Build=false?).");
         return false;
     }
 

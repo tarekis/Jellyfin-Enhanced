@@ -478,6 +478,24 @@ The page shows the last-sent time, or that no report has been sent. **Preview** 
 
     Reporting also maintains internal state, not additional editable controls. `AnalyticsHasBeenConfigured` starts at `false`; `AnalyticsLastReportedAt` and `AnalyticsForbiddenSinceLastSuccess` start at `0`. `AnalyticsInstallId`, `AnalyticsInstallSecret`, `AnalyticsLastPayloadJson`, `AnalyticsLastReportedPluginVersion`, `AnalyticsLastReportedJellyfinTarget`, and `AnalyticsLastReportedJellyfinVersion` start empty. These track registration, configured choices, and report history; see [Community Analytics](../advanced/community-analytics.md) for their role.
 
+## Compatibility
+
+Turn on **ES5 compatibility layer for old devices** when Jellyfin itself works on a device but nothing of Jellyfin Enhanced appears there. Example: an LG TV on webOS 3 in the official Jellyfin app. Those devices' browser engines are too old to run the regular scripts (webOS 3 TVs use Chromium 38).
+
+**How to use:** Open admin **Admin** → **Compatibility**, check **ES5 compatibility layer for old devices**, click **Save Settings**, and restart the app on the device.
+
+| Setting | Default | What it does |
+|---|---|---|
+| **ES5 compatibility layer for old devices** | Off | Serves Jellyfin Enhanced's scripts converted to ES5 JavaScript, with polyfills for the missing browser features. |
+
+??? note "Details"
+
+    The setting is server-wide: while it's on, every client gets the ES5 scripts. Modern browsers keep working, with somewhat more script to load. Switching it changes the script URLs, so clients pick up the other version on their next page load instead of a cached copy.
+
+    Some newer styling (spacing in flex layouts, `:has()` rules, `backdrop-filter` and similar) isn't available on those old engines, so the layout can look plainer there. Features still load.
+
+    The admin configuration page itself always uses the regular scripts. Building the plugin yourself needs Node.js 22+ for the ES5 scripts. A build made with `-p:JeEs5Build=false` leaves them out; the setting then has no effect, and the server log says so when you switch it.
+
 ## Developer Settings
 
 Use **Dev Mode** when developing JE scripts. Leave it off for normal use.

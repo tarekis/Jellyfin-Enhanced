@@ -5,7 +5,12 @@ import { createInstrumenter } from 'istanbul-lib-instrument';
 import coverage from 'istanbul-lib-coverage';
 import { repositoryRoot } from './discovery.mjs';
 
-export const jsRoot = resolve(repositoryRoot, 'Jellyfin.Plugin.JellyfinEnhanced/js');
+const sourceJsRoot = resolve(repositoryRoot, 'Jellyfin.Plugin.JellyfinEnhanced/js');
+// JE_ES5_DIR=<scripts/es5/build.mjs --out dir> runs the suite against the transpiled
+// ES5 modules, each window first evaluating the same polyfill layer plugin.js carries.
+const es5Dir = process.env.JE_ES5_DIR ? resolve(repositoryRoot, process.env.JE_ES5_DIR) : null;
+export const jsRoot = es5Dir ? resolve(es5Dir, 'js') : sourceJsRoot;
+const es5Prelude = es5Dir ? readFileSync(resolve(es5Dir, 'compat-prelude.js'), 'utf8') : null;
 const collected = coverage.createCoverageMap({});
 if (process.env.JE_COVERAGE_DIR) process.on('exit', () => {
   mkdirSync(process.env.JE_COVERAGE_DIR, { recursive: true });
@@ -29,6 +34,16 @@ export function createHarness({ html = '', url = 'http://jellyfin.test/web/index
     url, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole
   });
   const { window } = dom;
+  // Polyfills load before anything else, as in production; test doubles below win.
+  if (es5Prelude) {
+    const before = new Set(Object.getOwnPropertyNames(window));
+    window.eval(es5Prelude);
+    // Observer polyfills jsdom lacks switch modules onto their observer paths;
+    // the suite is written for jsdom without them and supplies doubles where needed.
+    for (const name of ['IntersectionObserver', 'IntersectionObserverEntry', 'ResizeObserver', 'ResizeObserverEntry', 'ResizeObserverSize', 'PointerEvent']) {
+      if (!before.has(name)) delete window[name];
+    }
+  }
   // Modules loaded by the host bundle run after the document is ready.
   Object.defineProperty(window.document, 'readyState', { configurable: true, value: 'complete' });
   window.JellyfinEnhanced = JE;
@@ -82,7 +97,7 @@ export const plain = value => JSON.parse(JSON.stringify(value));
 
 /** Install the real JE.keyCombo from config.js without running the rest of that module (it needs a full JE). */
 export function loadKeyCombo(harness) {
-  const source = readFileSync(resolve(jsRoot, 'enhanced/config.js'), 'utf8');
+  const source = readFileSync(resolve(sourceJsRoot, 'enhanced/config.js'), 'utf8');
   const match = /JE\.keyCombo = function[\s\S]*?\n    };/.exec(source);
   if (!match) throw new Error('JE.keyCombo not found in enhanced/config.js');
   harness.window.eval(`(function(JE){${match[0]}})(window.JellyfinEnhanced)`);

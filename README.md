@@ -25,6 +25,9 @@
   <a href="https://discord.gg/EYNFf7y4CG"><b>Discord</b></a>
 </p>
 
+> [!NOTE]
+> **Fork: ES5 compatibility layer for old devices.** This fork adds an admin setting, **Admin → Compatibility → ES5 compatibility layer for old devices** (off by default). When it's on, the server serves the client scripts transpiled to ES5 with a polyfill layer, so Jellyfin Enhanced also runs on devices whose web engine can't parse the regular scripts. One example is the official Jellyfin app on LG webOS 3.x TVs (Chromium 38). With the setting off, nothing changes. See [`scripts/es5/README.md`](scripts/es5/README.md). Building the plugin now needs Node.js 22+ next to the .NET SDK (`-p:JeEs5Build=false` builds without the layer and without Node.js).
+
 <p align="center">
   <img src="docs/images/readme/hero.webp" alt="A quick tour: quality tags on posters, then a movie page with ratings, streaming availability, reviews, awards, cast ages and Seerr recommendations" width="100%">
 </p>

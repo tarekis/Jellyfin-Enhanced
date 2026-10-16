@@ -4075,10 +4075,11 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Controllers
             }
 
             var devMode = plugin.Configuration?.DevMode == true;
+            var es5 = Services.ClientScriptVariant.UseEs5;
             byte[] script, sourceMap;
             try
             {
-                (script, sourceMap) = Services.ClientScriptBundle.GetBundle(plugin.ScriptCacheKey, rebuild: devMode, _logger);
+                (script, sourceMap) = Services.ClientScriptBundle.GetBundle(plugin.ScriptCacheKeyFor(es5), rebuild: devMode, _logger, es5);
             }
             catch (Exception ex)
             {
@@ -4724,7 +4725,9 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Controllers
 
         private ActionResult GetScriptResource(string resourcePath)
         {
-            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Jellyfin.Plugin.JellyfinEnhanced.{resourcePath.Replace('/', '.')}");
+            // The ES5 build of the script when the admin has ES5 compatibility mode on.
+            var stream = Services.ClientScriptVariant.Open(
+                $"Jellyfin.Plugin.JellyfinEnhanced.{resourcePath.Replace('/', '.')}", Services.ClientScriptVariant.UseEs5);
             if (stream == null) return NotFound();
 
             // Pick a content type that matches the requested file. Defaults to JS for the
@@ -12194,7 +12197,8 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Controllers
                 return NotFound("No matching view found");
             }
 
-            Stream? stream = JellyfinEnhanced.Instance.GetType().Assembly.GetManifestResourceStream(view.EmbeddedResourcePath);
+            // Plugin pages carry inline scripts, so they have an ES5 build too.
+            Stream? stream = Services.ClientScriptVariant.Open(view.EmbeddedResourcePath, Services.ClientScriptVariant.UseEs5);
 
             if (stream == null)
             {

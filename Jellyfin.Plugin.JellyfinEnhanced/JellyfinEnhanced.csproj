@@ -101,4 +101,54 @@
     <EmbeddedResource Include="js\**" />
   </ItemGroup>
 
+  <!--
+    ES5 client build (scripts/es5/build.mjs) for old devices whose web engine only
+    parses ES5, such as LG webOS 3.x TVs (Chromium 38). On by default so every build,
+    including a release built locally, carries it; needs Node.js >= 22 (the first build
+    runs `npm ci` in the repository root). -p:JeEs5Build=false builds without it and
+    without Node.js; the Es5CompatibilityMode setting then has no effect.
+    Babel-transpiled copies of js/**/*.js (with a polyfill layer in front of
+    js/plugin.js) and of the plugin pages are embedded Brotli-compressed NEXT TO the
+    originals under the "es5." resource prefix. The server hands them out, decompressed,
+    only while the admin setting Es5CompatibilityMode is on (Services/ClientScriptVariant).
+  -->
+  <PropertyGroup>
+    <JeEs5Build Condition="'$(JeEs5Build)' == ''">true</JeEs5Build>
+    <JeRepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/..'))</JeRepoRoot>
+    <JeEs5OutDirFull>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)es5/'))</JeEs5OutDirFull>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(JeEs5Build)' == 'true'">
+    <JeEs5Input Include="js\**\*.js;PluginPages\*.html" />
+    <JeEs5Input Include="$(JeRepoRoot)/scripts/es5/*;$(JeRepoRoot)/package-lock.json" />
+  </ItemGroup>
+
+  <Target Name="JeCheckNode" Condition="'$(JeEs5Build)' == 'true'">
+    <Exec Command="node --version" ConsoleToMSBuild="true" StandardOutputImportance="low" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="JeNodeExitCode" />
+    </Exec>
+    <Error Condition="'$(JeNodeExitCode)' != '0'"
+           Text="The ES5 compatibility build (scripts/es5/README.md) needs Node.js 22 or newer on the PATH. Install it, or build with -p:JeEs5Build=false to leave the ES5 compatibility layer out of the plugin." />
+  </Target>
+
+  <Target Name="JeNpmInstall" Condition="'$(JeEs5Build)' == 'true' And !Exists('$(JeRepoRoot)/node_modules/.package-lock.json')">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(JeRepoRoot)" />
+  </Target>
+
+  <Target Name="JeBuildEs5" DependsOnTargets="JeCheckNode;JeNpmInstall" Condition="'$(JeEs5Build)' == 'true'"
+          Inputs="@(JeEs5Input)" Outputs="$(JeEs5OutDirFull)embed/js/plugin.js.br">
+    <Exec Command="node scripts/es5/build.mjs --out &quot;$(JeEs5OutDirFull)&quot;" WorkingDirectory="$(JeRepoRoot)" />
+  </Target>
+
+  <Target Name="JeEmbedEs5" BeforeTargets="PrepareResourceNames" DependsOnTargets="JeBuildEs5" Condition="'$(JeEs5Build)' == 'true'">
+    <ItemGroup>
+      <JeEs5Js Include="$(JeEs5OutDirFull)embed/js/**/*.br" />
+      <JeEs5Page Include="$(JeEs5OutDirFull)embed/PluginPages/*.br" />
+      <EmbeddedResource Include="@(JeEs5Js)" WithCulture="false" Type="Non-Resx"
+                        LogicalName="$(RootNamespace).es5.js.$([System.String]::Copy('%(JeEs5Js.RecursiveDir)').Replace('\', '.').Replace('/', '.'))%(JeEs5Js.Filename)%(JeEs5Js.Extension)" />
+      <EmbeddedResource Include="@(JeEs5Page)" WithCulture="false" Type="Non-Resx"
+                        LogicalName="$(RootNamespace).es5.PluginPages.%(JeEs5Page.Filename)%(JeEs5Page.Extension)" />
+    </ItemGroup>
+  </Target>
+
 </Project>

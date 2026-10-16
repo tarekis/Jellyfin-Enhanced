@@ -1,21 +1,47 @@
-# ES5 build for old TV clients
+# ES5 compatibility layer for old devices
 
-Jellyfin Enhanced's client scripts are modern JavaScript. The LG webOS 3.x TV
-web engine (Chromium 38; webOS 1–3 generally) only parses ES5, so on those TVs
-the bundle fails with a `SyntaxError` before any module runs, and nothing of
-the plugin appears in the official Jellyfin webOS app, even though that app
-loads the server's web UI with the plugin's script tag in it.
+Jellyfin Enhanced's client scripts are modern JavaScript. Some devices'
+web engines only parse ES5. One example is the LG webOS 3.x TV, Chromium 38,
+and webOS 1–3 generally. On those devices the bundle fails with a
+`SyntaxError` before any module runs, and nothing of the plugin appears, for
+example in the official Jellyfin webOS app, even though that app loads the
+server's web UI with the plugin's script tag in it.
 
-`build.mjs` fixes that at build time. `dotnet build` runs it (see the
+The admin setting **Admin → Compatibility → ES5 compatibility layer for old
+devices** (`Es5CompatibilityMode`, off by default) fixes that by serving an ES5
+build of the scripts instead.
+
+## Build
+
+`build.mjs` produces the ES5 build. `dotnet build` runs it (see the
 `JeBuildEs5`/`JeEmbedEs5` targets in `JellyfinEnhanced.csproj`), and the DLL
-then embeds ES5 output in place of the sources, under the same resource names.
-The C# serving code is unchanged.
+embeds the output **next to** the original resources, under the `es5.`
+resource prefix (`Jellyfin.Plugin.JellyfinEnhanced.es5.js.…`). The original
+resources are unchanged.
 
 | Input | Output |
 | --- | --- |
 | `js/**/*.js` | Babel (`@babel/preset-env`, target `chrome 38`), line numbers kept so the bundle's source map still lines up |
-| inline `<script>` blocks of `PluginPages/*.html` and `Configuration/configPage.html` | the same transform |
+| inline `<script>` blocks of `PluginPages/*.html` | the same transform |
 | — | compatibility layer, minified and prepended to `js/plugin.js` |
+
+The admin configuration page is served by Jellyfin itself, not by the plugin,
+and always keeps its regular scripts.
+
+## Serving
+
+`Services/ClientScriptVariant.cs` decides per request. With the setting on and
+the ES5 resources present, these all return the `es5.` resource:
+
+* `/JellyfinEnhanced/script`
+* `/JellyfinEnhanced/js/*`
+* `/JellyfinEnhanced/bundle.js` (every module)
+* the plugin pages
+
+Everything else (locales, fonts, JSON, CSS) is shared. The script cache key
+gets an `-es5` suffix, so switching the setting changes every script URL, and
+clients load the other build on their next page load instead of a cached copy.
+With the setting off, the responses are byte-for-byte what they were before.
 
 `plugin.js` is the script the server injects into `index.html`. It runs
 before every other client script, so the layer is in place for the bundle, the
@@ -74,7 +100,7 @@ npm ci
 npm run build:es5                 # -> Jellyfin.Plugin.JellyfinEnhanced/obj/es5
 npm run test:frontend:es5         # the frontend suite against the ES5 output
 npm run test:chromium38           # boots plugin.js + bundle in a real Chromium 38 (tests/es5/README.md)
-dotnet build -p:JeEs5Build=false  # skip the transform: embeds the modern sources (needs no Node.js)
+dotnet build -p:JeEs5Build=false  # build without the ES5 resources (needs no Node.js; the setting then has no effect)
 ```
 
 The build fails if any output file doesn't parse as ES5 (checked with acorn),

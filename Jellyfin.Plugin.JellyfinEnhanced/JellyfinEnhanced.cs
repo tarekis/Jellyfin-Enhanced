@@ -177,8 +177,14 @@ namespace Jellyfin.Plugin.JellyfinEnhanced
         // Cache-busting key: plugin version plus the DLL's last-write timestamp, so
         // every build yields a distinct value even when the version is unchanged
         // (local dev/testing). Falls back to the bare version if the assembly
-        // location can't be read (e.g. single-file hosting).
-        internal string ScriptCacheKey
+        // location can't be read (e.g. single-file hosting). Serving the ES5 build
+        // (ClientScriptVariant) adds "-es5", so switching it changes every script URL
+        // and clients never reuse a cached copy of the other build.
+        internal string ScriptCacheKey => ScriptCacheKeyFor(Services.ClientScriptVariant.UseEs5);
+
+        internal string ScriptCacheKeyFor(bool es5) => BaseScriptCacheKey + (es5 ? "-es5" : string.Empty);
+
+        private string BaseScriptCacheKey
         {
             get
             {
@@ -237,6 +243,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced
             // from an unrelated config save (this method fires on every save).
             var tagCacheWasEnabled = Configuration?.TagCacheServerMode == true;
             var analyticsWasEnabled = Configuration?.AnalyticsEnabled == true;
+            var es5WasEnabled = Configuration?.Es5CompatibilityMode == true;
 
             // The Analytics* identity/bookkeeping fields are server-minted and
             // never editable on the config page, but a save replaces the whole
@@ -286,6 +293,19 @@ namespace Jellyfin.Plugin.JellyfinEnhanced
             catch (Exception ex)
             {
                 _logger.Warning($"Jellyfin Enhanced: failed to clear Seerr caches on config update: {ex.Message}");
+            }
+
+            // Switching the script build changes the script tag's cache key. The
+            // request-time injection builds the tag per request; the legacy on-disk
+            // index.html (middleware disabled) holds the old one until rewritten.
+            if (es5WasEnabled != (Configuration?.Es5CompatibilityMode == true))
+            {
+                _logger.Info($"Jellyfin Enhanced: ES5 compatibility mode {(Configuration?.Es5CompatibilityMode == true ? "enabled" : "disabled")}"
+                    + (Services.ClientScriptVariant.Es5Embedded ? "." : ", but this build has no ES5 scripts (built with JeEs5Build=false); serving the modern scripts."));
+                if (Configuration?.DisableScriptInjectionMiddleware == true)
+                {
+                    UpdateIndexHtml(true);
+                }
             }
 
             // The transitions themselves run on a serialized background queue in

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // ES5 build for the client scripts.
 //
-// Old TV clients (LG webOS 3.x = Chromium 38) only parse ES5, so one modern
-// file is enough for the whole component bundle to fail with a SyntaxError
-// and nothing of Jellyfin Enhanced appears. This transpiles every embedded
-// client script (js/**/*.js and the inline <script> blocks of the plugin's
-// HTML pages) to ES5 with Babel and writes them to an output directory that
-// the .csproj embeds in place of the sources, under the same resource names.
+// Old devices (e.g. LG webOS 3.x TVs = Chromium 38) only parse ES5, so one
+// modern file is enough for the whole component bundle to fail with a
+// SyntaxError and nothing of Jellyfin Enhanced appears. This transpiles every
+// client script (js/**/*.js and the inline <script> blocks of the plugin
+// pages) to ES5 with Babel and writes them to an output directory that the
+// .csproj embeds next to the originals under the "es5." resource prefix. The
+// server serves them only while the admin setting Es5CompatibilityMode is on.
 //
 // Polyfills: the core-js modules Babel detects as used, plus the DOM shims in
 // ./dom-shims.js and a few DOM polyfill packages, are bundled once and put in
@@ -39,13 +40,12 @@ function arg(name, fallback) {
 const projectDir = arg('--project', path.join(repoRoot, 'Jellyfin.Plugin.JellyfinEnhanced'));
 const outDir = arg('--out', path.join(projectDir, 'obj', 'es5'));
 
-// Inline <script> blocks of these pages run inside jellyfin-web too.
-const HTML_PAGES = [
-    ...fs.readdirSync(path.join(projectDir, 'PluginPages'))
-        .filter((f) => f.endsWith('.html'))
-        .map((f) => `PluginPages/${f}`),
-    'Configuration/configPage.html',
-];
+// Inline <script> blocks of the plugin pages (served by the plugin's own
+// controller). The admin config page is served by Jellyfin itself, so it keeps
+// its modern scripts.
+const HTML_PAGES = fs.readdirSync(path.join(projectDir, 'PluginPages'))
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => `PluginPages/${f}`);
 
 // Every core-js module Chromium 38 needs, not only the ones usage detection
 // finds: core-js replaces some natives wholesale (Promise, Map, ...), and a

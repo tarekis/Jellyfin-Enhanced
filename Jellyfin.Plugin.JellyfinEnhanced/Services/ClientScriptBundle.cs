@@ -53,7 +53,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
 
         private static readonly object _lock = new();
         private static string[]? _manifest;
-        private static (string CacheKey, byte[] Script, byte[] SourceMap)? _cached;
+        private static (string CacheKey, bool Es5, byte[] Script, byte[] SourceMap)? _cached;
 
         /// <summary>
         /// The ordered component-script paths (relative to js/), with the "//"
@@ -83,19 +83,20 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
         /// <summary>
         /// Returns the bundle script and its source map for the given cache key,
         /// building them on first use. <paramref name="rebuild"/> (dev mode)
-        /// bypasses the process-lifetime cache.
+        /// bypasses the process-lifetime cache. <paramref name="es5"/> bundles the
+        /// ES5 build of each module (see ClientScriptVariant) where one is embedded.
         /// </summary>
-        internal static (byte[] Script, byte[] SourceMap) GetBundle(string cacheKey, bool rebuild, Logger logger)
+        internal static (byte[] Script, byte[] SourceMap) GetBundle(string cacheKey, bool rebuild, Logger logger, bool es5 = false)
         {
             lock (_lock)
             {
-                if (!rebuild && _cached.HasValue && _cached.Value.CacheKey == cacheKey)
+                if (!rebuild && _cached.HasValue && _cached.Value.CacheKey == cacheKey && _cached.Value.Es5 == es5)
                 {
                     return (_cached.Value.Script, _cached.Value.SourceMap);
                 }
 
-                var built = Build(cacheKey, logger);
-                _cached = (cacheKey, built.Script, built.SourceMap);
+                var built = Build(cacheKey, es5, logger);
+                _cached = (cacheKey, es5, built.Script, built.SourceMap);
                 return built;
             }
         }
@@ -107,7 +108,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
             public int LineCount { get; init; }
         }
 
-        private static (byte[] Script, byte[] SourceMap) Build(string cacheKey, Logger logger)
+        private static (byte[] Script, byte[] SourceMap) Build(string cacheKey, bool es5, Logger logger)
         {
             var scripts = GetComponentScripts();
             var assembly = Assembly.GetExecutingAssembly();
@@ -136,7 +137,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Services
                 string? content = null;
                 if (SafePath.IsMatch(path))
                 {
-                    using var stream = assembly.GetManifestResourceStream(ResourcePrefix + path.Replace('/', '.'));
+                    using var stream = assembly.GetManifestResourceStream(ClientScriptVariant.Resolve(ResourcePrefix + path.Replace('/', '.'), es5));
                     if (stream != null)
                     {
                         using var reader = new StreamReader(stream, Encoding.UTF8);

@@ -42,6 +42,7 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Configuration
             MaintenanceScheduleAction = "none";
             SplashScreenImageUrl = "/web/assets/img/banner-light.png";
             DevMode = false;
+            Es5CompatibilityMode = false;
 
             // Jellyfin Elsewhere Settings
             ElsewhereEnabled = true;
@@ -493,6 +494,12 @@ namespace Jellyfin.Plugin.JellyfinEnhanced.Configuration
         public bool EnableCustomSplashScreen { get; set; }
         public string SplashScreenImageUrl { get; set; }
         public bool DevMode { get; set; }
+
+        // Serve the ES5 build of the client scripts (scripts/es5/build.mjs) instead of
+        // the modern ones, to every client: for old devices whose web engine can't
+        // parse modern JavaScript (e.g. LG webOS 3.x TVs, Chromium 38). Default false.
+        // See Services/ClientScriptVariant.
+        public bool Es5CompatibilityMode { get; set; }
 
         // Kill-switch for the request-time <script> injection middleware
         // (ScriptInjectionStartupFilter). When true, the middleware no-ops and the

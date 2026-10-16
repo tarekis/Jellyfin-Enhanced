@@ -3193,6 +3193,16 @@
                     </fieldset>
 
                     <fieldset>
+                        <legend class="sectionTitle">Compatibility</legend>
+                        <div class="configSection">
+                            <div class="checkboxContainer"><label><input id="es5CompatibilityMode" is="emby-checkbox" type="checkbox"/><span>ES5 compatibility layer for old devices</span></label></div>
+                            <div class="je-setting-description" data-desc-for="es5CompatibilityMode">
+                                <div class="fieldDescription">Serves a version of Jellyfin Enhanced's scripts that is converted to ES5 JavaScript and carries polyfills, for old devices whose browser engine can't run the regular scripts, such as LG webOS 3 TVs in the official Jellyfin app (Chromium 38). On those devices Jellyfin itself works but nothing of Jellyfin Enhanced appears. <br>Applies to every client. Modern browsers keep working with it on, with somewhat more script to load. <br>Default: OFF. Clients pick up the change on their next page load.</div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
                         <legend class="sectionTitle">Developer Settings</legend>
                         <div class="configSection">
                             <div class="checkboxContainer"><label><input id="devMode" is="emby-checkbox" type="checkbox"/><span>Dev Mode</span></label></div>
@@ -6377,6 +6387,7 @@
 
                 // Load all other settings
                 document.querySelector('#devMode').checked = config.DevMode;
+                document.querySelector('#es5CompatibilityMode').checked = config.Es5CompatibilityMode === true;
                 document.querySelector('#maintenanceModeEnabled').checked = config.MaintenanceModeEnabled || false;
                 document.querySelector('#maintenanceModeEnabled').dataset.jeLoaded = String(config.MaintenanceModeEnabled === true);
                 document.querySelector('#maintenanceModeMessage').value = config.MaintenanceModeMessage || '';
@@ -6967,6 +6978,7 @@
             });
             config.Shortcuts = finalShortcuts;
             config.DevMode = document.querySelector('#devMode').checked;
+            config.Es5CompatibilityMode = document.querySelector('#es5CompatibilityMode').checked;
             // A timed window switches maintenance off by itself (and another admin or the API can
             // flip it) while this page is open. When the toggle was not touched since it was loaded,
             // keep the server's current value so saving unrelated settings never quietly starts a

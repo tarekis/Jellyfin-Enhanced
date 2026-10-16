@@ -88,6 +88,11 @@ jobs:
           dotnet-version: |
             9.0.x
             10.0.x
+      # The plugin build transpiles the client scripts to ES5 (scripts/es5/build.mjs).
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22.14.0'
+          cache: npm
       # Dependabot bumps package versions but cannot update the per-target lock files
       # (packages.jf10/jf12.lock.json), so the locked restore below would stop with NU1004.
       # Regenerate this target's lock files and fail with the fix instead.
@@ -129,6 +134,8 @@ jobs:
       - run: npm ci
       - run: python3 -m unittest discover -s tests/runner/tests -v
       - run: python3 tests/run.py frontend
+      # The same suite against the ES5 build that the plugin DLL embeds.
+      - run: npm run test:frontend:es5
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

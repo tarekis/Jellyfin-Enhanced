@@ -25,6 +25,9 @@
   <a href="https://discord.gg/EYNFf7y4CG"><b>Discord</b></a>
 </p>
 
+> [!NOTE]
+> **Fork: ES5 build for old TVs.** This fork transpiles the plugin's client scripts to ES5 and adds a polyfill layer at build time. The plugin then also runs in the official Jellyfin app on older LG webOS TVs (webOS 3.x, Chromium 38), whose web engine can't parse the upstream scripts. See [`scripts/es5/README.md`](scripts/es5/README.md). Building needs Node.js 22+ next to the .NET SDK.
+
 <p align="center">
   <img src="docs/images/readme/hero.webp" alt="A quick tour: quality tags on posters, then a movie page with ratings, streaming availability, reviews, awards, cast ages and Seerr recommendations" width="100%">
 </p>

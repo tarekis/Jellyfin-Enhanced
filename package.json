@@ -6,16 +6,32 @@
   "scripts": {
     "test": "npm run test:frontend",
     "test:frontend": "node tests/frontend/run.mjs",
+    "test:frontend:es5": "node scripts/es5/build.mjs && JE_ES5_DIR=Jellyfin.Plugin.JellyfinEnhanced/obj/es5 node tests/frontend/run.mjs",
+    "test:chromium38": "node tests/es5/chromium38-smoke.mjs",
     "test:frontend:coverage": "node tests/frontend/helpers/coverage.mjs",
     "test:browser": "playwright test --config tests/browser/playwright.config.cjs",
-    "test:visual": "playwright test --config tests/browser/playwright.config.cjs --grep @visual"
+    "test:visual": "playwright test --config tests/browser/playwright.config.cjs --grep @visual",
+    "build:es5": "node scripts/es5/build.mjs"
   },
   "devDependencies": {
+    "@babel/core": "8.0.7",
+    "@babel/plugin-external-helpers": "8.0.1",
+    "@babel/preset-env": "8.0.7",
+    "@juggle/resize-observer": "3.4.0",
     "@playwright/test": "1.58.2",
-    "jsdom": "26.1.0",
-    "istanbul-lib-instrument": "6.0.3",
+    "abortcontroller-polyfill": "1.7.8",
+    "acorn": "8.19.0",
+    "babel-plugin-polyfill-corejs3": "1.0.0",
+    "core-js": "3.50.0",
+    "css-vars-ponyfill": "2.4.9",
+    "css.escape": "1.5.1",
+    "esbuild": "0.28.2",
+    "intersection-observer": "0.12.2",
     "istanbul-lib-coverage": "3.2.2",
+    "istanbul-lib-instrument": "6.0.3",
     "istanbul-lib-report": "3.0.1",
-    "istanbul-reports": "3.2.0"
+    "istanbul-reports": "3.2.0",
+    "jsdom": "26.1.0",
+    "whatwg-fetch": "3.6.20"
   }
 }
